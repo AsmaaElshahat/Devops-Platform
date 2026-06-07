@@ -1,0 +1,269 @@
+{
+  "id": null,
+  "uid": "backend-metrics",
+  "title": "Backend Metrics",
+  "tags": ["backend", "prometheus"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 0,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "rows": [
+    {
+      "title": "System Resources",
+      "panels": [
+        {
+          "id": 1,
+          "title": "CPU Usage",
+          "type": "singlestat",
+          "targets": [
+            {
+              "expr": "app_cpu_usage_percent",
+              "legendFormat": "CPU %",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "format": "percent",
+          "thresholds": "60,80",
+          "valueName": "current",
+          "colorBg": true,
+          "sparkline": {
+            "show": true,
+            "fullSize": false
+          },
+          "span": 3
+        },
+        {
+          "id": 2,
+          "title": "Memory Usage",
+          "type": "singlestat",
+          "targets": [
+            {
+              "expr": "app_memory_usage_percent",
+              "legendFormat": "Memory %",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "format": "percent",
+          "thresholds": "60,80",
+          "valueName": "current",
+          "colorBg": true,
+          "sparkline": {
+            "show": true,
+            "fullSize": false
+          },
+          "span": 3
+        },
+        {
+          "id": 3,
+          "title": "Disk Usage",
+          "type": "singlestat",
+          "targets": [
+            {
+              "expr": "app_disk_usage_percent",
+              "legendFormat": "Disk %",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "format": "percent",
+          "thresholds": "60,80",
+          "valueName": "current",
+          "colorBg": true,
+          "sparkline": {
+            "show": true,
+            "fullSize": false
+          },
+          "span": 3
+        },
+        {
+          "id": 4,
+          "title": "Health Status",
+          "type": "singlestat",
+          "targets": [
+            {
+              "expr": "app_health_status",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "valueName": "current",
+          "colorBg": true,
+          "colors": ["#299c46", "#e24d42"],
+          "thresholds": "0.99",
+          "mapper": [
+            {"from": "0", "to": "0.99", "text": "Unhealthy"},
+            {"from": "1", "to": "100", "text": "Healthy"}
+          ],
+          "span": 3
+        }
+      ],
+      "repeat": "system_resource",
+      "repeatIteration": 1,
+      "repeatRowId": 1,
+      "ids": [1, 2, 3, 4]
+    },
+    {
+      "title": "HTTP Request Rates",
+      "panels": [
+        {
+          "id": 5,
+          "title": "Request Rate by Status Code",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(app_http_requests_total[5m])) by (status)",
+              "legendFormat": "{{ status }}",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "yaxes": [
+            {"label": "req/s", "format": "reqps"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 12
+        },
+        {
+          "id": 6,
+          "title": "Request Rate by Endpoint",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(app_http_requests_total[5m])) by (endpoint)",
+              "legendFormat": "{{ endpoint }}",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "yaxes": [
+            {"label": "req/s", "format": "reqps"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 12
+        }
+      ],
+      "repeatIteration": 2,
+      "repeatRowId": 2,
+      "ids": [5, 6]
+    },
+    {
+      "title": "Request Duration",
+      "panels": [
+        {
+          "id": 7,
+          "title": "Request Duration Histogram",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(http_request_duration_seconds_bucket[5m])",
+              "legendFormat": "{{ le }}",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "stack": true,
+          "yaxes": [
+            {"format": "reqps", "label": "req/s"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 6
+        },
+        {
+          "id": 8,
+          "title": "Average Request Duration",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])",
+              "legendFormat": "Avg Duration",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "yaxes": [
+            {"format": "s", "label": "seconds"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 6
+        }
+      ],
+      "repeatIteration": 3,
+      "repeatRowId": 3,
+      "ids": [7, 8]
+    },
+    {
+      "title": "Flask Default Metrics",
+      "panels": [
+        {
+          "id": 9,
+          "title": "Flask Request Rate by Method & Status",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total[5m])) by (method, status)",
+              "legendFormat": "{{ method }} {{ status }}",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "yaxes": [
+            {"label": "req/s", "format": "reqps"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 6
+        },
+        {
+          "id": 10,
+          "title": "Flask Request Duration Avg",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])",
+              "legendFormat": "Avg Duration",
+              "refId": "A"
+            }
+          ],
+          "datasource": "Prometheus",
+          "yaxes": [
+            {"format": "s", "label": "seconds"},
+            {"format": "short"}
+          ],
+          "xaxis": {"show": true},
+          "tooltip": {"valueTypes": ["legend", "null"]},
+          "legend": {"show": true},
+          "span": 6
+        }
+      ],
+      "repeatIteration": 4,
+      "repeatRowId": 4,
+      "ids": [9, 10]
+    }
+  ],
+  "version": 1,
+  "schemaVersion": 29,
+  "style": "dark",
+  "links": [],
+  "gnetId": null
+}

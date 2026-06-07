@@ -1,0 +1,410 @@
+Terraform Infrastructure Explanation
+====================================
+
+This folder implements Phase 3 of the project. It uses Terraform to create a
+local Kind Kubernetes cluster and then deploy the platform tools with Helm:
+
+- ingress-nginx
+- Vault
+- kube-prometheus-stack
+- Grafana
+- Loki
+
+The full Terraform flow is:
+
+1. Read inputs from variables.tf.
+2. Build a Kind cluster config in main.tf.
+3. Write the generated Kind config to infrastructure/kind-config.yaml.
+4. Run kind create cluster through a null_resource local-exec provisioner.
+5. Use the Helm provider to install the platform charts into the new cluster.
+6. Print useful URLs, release names, and kubectl commands from outputs.tf.
+7. On terraform destroy, remove the Helm releases and delete the Kind cluster.
+
+
+providers.tf
+------------
+
+This file declares Terraform and provider requirements.
+
+Terraform version:
+  required_version = ">= 1.5.0"
+
+Providers:
+  docker:
+    Source: kreuzwerker/docker
+    Purpose: Included for the Docker part of Phase 3. Kind itself also depends
+    on Docker because each Kubernetes node runs as a Docker container.
+
+  local:
+    Source: hashicorp/local
+    Purpose: Writes the generated kind-config.yaml file.
+
+  null:
+    Source: hashicorp/null
+    Purpose: Runs local shell commands for Kind create/delete.
+
+  helm:
+    Source: hashicorp/helm
+    Purpose: Installs Kubernetes platform services using Helm charts.
+
+The Helm provider is configured to use:
+  config_path    = the default kubeconfig, or var.kubeconfig_path if provided
+  config_context = kind-${var.cluster_name}
+
+With the default cluster name, the context is:
+  kind-devops-platform
+
+
+variables.tf
+------------
+
+This file contains all configurable input values.
+
+Cluster variables:
+  cluster_name:
+    Default: devops-platform
+    The Kind cluster name.
+
+  worker_node_count:
+    Default: 1
+    Adds worker nodes alongside the control-plane node.
+
+  kubernetes_node_image:
+    Default: null
+    Optional Kind node image, useful when you want a specific Kubernetes
+    version.
+
+  kind_config_filename:
+    Default: kind-config.yaml
+    The generated Kind config file name.
+
+  kubeconfig_path:
+    Default: null
+    Optional custom kubeconfig path. If null, Terraform uses ~/.kube/config.
+
+Port variables:
+  port_mappings:
+    Defines host-to-Kind-node port mappings.
+
+    Defaults:
+      localhost:8080 -> node port 80     ingress HTTP
+      localhost:8443 -> node port 443    ingress HTTPS
+      localhost:8200 -> node port 8200   Vault
+      localhost:3000 -> node port 3000   Grafana
+      localhost:9090 -> node port 9090   Prometheus
+      localhost:3100 -> node port 3100   Loki
+
+  platform_node_ports:
+    Defines the NodePort values used by the Helm chart services inside the
+    cluster. The defaults match the container ports in port_mappings.
+
+Helm control variables:
+  enable_platform_helm_releases:
+    Default: true
+    If true, Terraform installs the Phase 3 Helm charts. Set this to false if
+    you only want Terraform to create the Kind cluster.
+
+  helm_timeout_seconds:
+    Default: 900
+    Timeout for Helm installs and upgrades.
+
+Namespace variables:
+  ingress_namespace:
+    Default: ingress
+
+  vault_namespace:
+    Default: vault
+
+  monitoring_namespace:
+    Default: monitoring
+
+  logging_namespace:
+    Default: logging
+
+Chart version variables:
+  ingress_nginx_chart_version
+  vault_chart_version
+  prometheus_stack_chart_version
+  grafana_chart_version
+  loki_chart_version
+
+All chart versions default to null. That means Terraform uses the latest chart
+available in each repository at apply time. Set these variables if you want
+fixed, repeatable chart versions.
+
+Credential variables:
+  grafana_admin_user:
+    Default: admin
+
+  grafana_admin_password:
+    Default: admin
+    Sensitive Terraform value.
+
+  vault_dev_root_token:
+    Default: root
+    Sensitive Terraform value.
+
+These defaults are fine for a local portfolio lab. They are not production
+secrets.
+
+
+main.tf
+-------
+
+This file defines local helper values.
+
+Important locals:
+  node_image:
+    Cleans up the optional Kubernetes node image.
+
+  kind_config_path:
+    Full path to the generated Kind config.
+
+  kubeconfig_path_effective:
+    Uses var.kubeconfig_path if set, otherwise ~/.kube/config.
+
+  kubeconfig_context:
+    Builds the Kind context name, such as kind-devops-platform.
+
+  port_mapping_yaml_lines:
+    Converts the Terraform port_mappings variable into Kind YAML lines.
+
+  worker_node_yaml_lines:
+    Generates worker-node entries based on worker_node_count.
+
+  kind_config_yaml_lines:
+    Assembles the full Kind config.
+
+The Kind config includes this API server patch:
+  service-node-port-range: "1-65535"
+
+This matters because normal Kubernetes NodePorts are usually restricted to
+30000-32767. This project intentionally uses friendly local ports like 80, 443,
+3000, 8200, 9090, and 3100 inside the Kind node, so the NodePort range must be
+expanded.
+
+
+kind-cluster.tf
+---------------
+
+This file creates and destroys the Kind cluster.
+
+local_file.kind_config:
+  Writes infrastructure/kind-config.yaml from local.kind_config_yaml.
+
+null_resource.kind_cluster:
+  Uses local-exec provisioners to run Kind commands.
+
+On terraform apply, it:
+  1. Checks that kind exists.
+  2. Checks that docker exists.
+  3. Checks whether the cluster already exists.
+  4. Runs kind create cluster if needed.
+
+On terraform destroy, it:
+  1. Checks whether kind exists.
+  2. Checks whether the cluster exists.
+  3. Runs kind delete cluster if needed.
+
+The Helm releases depend on this cluster resource, so Terraform creates the
+cluster before installing the charts.
+
+
+helm-releases.tf
+----------------
+
+This file installs all Phase 3 Kubernetes platform tools using Helm.
+
+helm_release.ingress_nginx:
+  Chart:
+    ingress-nginx/ingress-nginx
+
+  Repository:
+    https://kubernetes.github.io/ingress-nginx
+
+  Namespace:
+    ingress
+
+  Purpose:
+    Provides the Kubernetes ingress controller for routing HTTP/HTTPS traffic
+    into the cluster.
+
+  Exposure:
+    NodePort 80 for HTTP
+    NodePort 443 for HTTPS
+
+helm_release.vault:
+  Chart:
+    hashicorp/vault
+
+  Repository:
+    https://helm.releases.hashicorp.com
+
+  Namespace:
+    vault
+
+  Purpose:
+    Provides Vault for secrets management.
+
+  Local mode:
+    Runs Vault in dev mode for this local lab.
+
+  Exposure:
+    NodePort 8200
+
+helm_release.prometheus:
+  Chart:
+    prometheus-community/kube-prometheus-stack
+
+  Repository:
+    https://prometheus-community.github.io/helm-charts
+
+  Namespace:
+    monitoring
+
+  Purpose:
+    Installs Prometheus Operator, Prometheus, alerting components, and CRDs such
+    as ServiceMonitor.
+
+  Grafana note:
+    The bundled Grafana in kube-prometheus-stack is disabled because this
+    project deploys Grafana as its own Helm release.
+
+  Exposure:
+    NodePort 9090
+
+helm_release.loki:
+  Chart:
+    grafana-community/loki
+
+  Repository:
+    https://grafana-community.github.io/helm-charts
+
+  Namespace:
+    logging
+
+  Purpose:
+    Provides Loki for log storage and querying.
+
+  Local mode:
+    Runs Loki in monolithic mode with one replica and filesystem storage.
+
+  Exposure:
+    Loki gateway NodePort 3100
+
+helm_release.grafana:
+  Chart:
+    grafana/grafana
+
+  Repository:
+    https://grafana.github.io/helm-charts
+
+  Namespace:
+    monitoring
+
+  Purpose:
+    Provides dashboards and observability UI.
+
+  Datasources:
+    Prometheus is configured as the default datasource.
+    Loki is configured as a second datasource.
+
+  Exposure:
+    NodePort 3000
+
+
+outputs.tf
+----------
+
+This file prints useful information after terraform apply.
+
+cluster_name:
+  The Kind cluster name.
+
+kubeconfig_context:
+  The kubectl context name.
+
+kind_config_path:
+  Path to the generated Kind config file.
+
+host_port_mappings:
+  Shows which host ports map to which Kind node ports.
+
+platform_urls:
+  Local URLs for the platform:
+    http://localhost:8080   ingress HTTP
+    https://localhost:8443  ingress HTTPS
+    http://localhost:8200   Vault
+    http://localhost:3000   Grafana
+    http://localhost:9090   Prometheus
+    http://localhost:3100   Loki
+
+helm_releases:
+  Shows the Helm release names and namespaces.
+
+next_commands:
+  Prints useful kubectl and Kind commands.
+
+
+.terraform.lock.hcl
+-------------------
+
+Created by terraform init.
+
+This records the exact provider versions selected by Terraform. Keep it so
+future runs use consistent provider versions.
+
+
+.gitignore
+----------
+
+Ignores local Terraform runtime files:
+  .terraform/
+  *.tfstate
+  *.tfstate.*
+  *.tfplan
+  crash.log
+  crash.*.log
+  kind-config.yaml
+
+
+Common Commands
+---------------
+
+Run these from the infrastructure directory.
+
+Initialize:
+  terraform init
+
+Format:
+  terraform fmt
+
+Validate:
+  terraform validate
+
+Preview:
+  terraform plan
+
+Apply all Phase 3 infrastructure:
+  terraform apply
+
+Destroy all Phase 3 infrastructure:
+  terraform destroy
+
+Create only the Kind cluster, without Helm releases:
+  terraform apply -var="enable_platform_helm_releases=false"
+
+
+Requirements Before terraform apply
+-----------------------------------
+
+Docker must be available because Kind creates Kubernetes nodes as Docker
+containers.
+
+Kind must be installed because Terraform runs kind create cluster.
+
+kubectl should be installed so you can inspect the cluster after creation.
+
+Terraform does not need the Helm CLI for these Helm releases, because it uses
+the Terraform Helm provider. Installing the Helm CLI is still useful for manual
+debugging.

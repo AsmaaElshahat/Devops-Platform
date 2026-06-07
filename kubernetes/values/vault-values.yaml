@@ -1,0 +1,18 @@
+injector:
+  enabled: true
+
+server:
+  dev:
+    enabled: true
+  dataStorage:
+    enabled: false
+  auditStorage:
+    enabled: false
+  service:
+    type: NodePort
+    nodePort: 8200
+
+ui:
+  enabled: true
+  serviceType: ClusterIP
+

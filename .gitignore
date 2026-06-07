@@ -1,0 +1,7 @@
+frontend/__pycache__
+__pycache__
+backend/__pycache__
+infrastructure/.terraform.lock.hcl
+prometheus-data
+grafana-data
+kubectl

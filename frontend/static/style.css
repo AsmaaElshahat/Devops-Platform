@@ -1,0 +1,175 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #38bdf8;
+    font-size: 1.8rem;
+}
+
+h2 {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #334155;
+}
+
+.status {
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+}
+
+.status.healthy .value {
+    color: #4ade80;
+}
+
+.status.unhealthy .value {
+    color: #f87171;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #334155;
+}
+
+.metric:last-child {
+    border-bottom: none;
+}
+
+.label {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.value {
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.value a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+
+.value a:hover {
+    text-decoration: underline;
+}
+
+.btn {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+.btn-success {
+    background: #16a34a;
+    color: white;
+}
+
+.btn-not-found {
+    background: #d97706;
+    color: white;
+}
+
+.btn-error {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-info {
+    background: #2563eb;
+    color: white;
+}
+
+.form {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.form label {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.form input {
+    width: 100%;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 0.65rem;
+    font-size: 0.9rem;
+}
+
+.form .btn {
+    margin-top: 0.5rem;
+}
+
+.result {
+    margin-top: 1rem;
+    padding: 0.7rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    text-align: center;
+    min-height: 1.5rem;
+}
+
+.result-ok {
+    background: #166534;
+    color: #4ade80;
+}
+
+.result-warn {
+    background: #78350f;
+    color: #fbbf24;
+}
+
+.result-error {
+    background: #7f1d1d;
+    color: #f87171;
+}

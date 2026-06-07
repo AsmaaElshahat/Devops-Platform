@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>DevOps Integration Platform</h1>
+
+        <div class="grid">
+            <!-- Health Status -->
+            <div class="card">
+                <h2>Backend Health</h2>
+                <div class="status {{ 'healthy' if health.status == 'healthy' else 'unhealthy' }}">
+                    <span class="label">Status</span>
+                    <span class="value">{{ health.status | upper }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Uptime</span>
+                    <span class="value">{{ "%.1f"|format(health.get('uptime_seconds', 0)) }}s</span>
+                </div>
+            </div>
+
+            <!-- System Metrics -->
+            <div class="card">
+                <h2>System Metrics</h2>
+                <div class="metric">
+                    <span class="label">CPU</span>
+                    <span class="value">{{ metrics.get('cpu_usage', 0) }}%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Memory</span>
+                    <span class="value">{{ metrics.get('memory_usage', 0) }}%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Disk</span>
+                    <span class="value">{{ metrics.get('disk_usage', 0) }}%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Uptime</span>
+                    <span class="value">{{ "%.1f"|format(metrics.get('uptime_seconds', 0)) }}s</span>
+                </div>
+            </div>
+
+            <!-- Simulate Endpoints -->
+            <div class="card">
+                <h2>Simulate Endpoints</h2>
+                <button id="btnSuccess" class="btn btn-success">Simulate Success (200)</button>
+                <button id="btnNotFound" class="btn btn-not-found">Simulate Not Found (404)</button>
+                <button id="btnError" class="btn btn-error">Simulate Error (500)</button>
+                <div id="result" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h2>Vault Validation</h2>
+                <form id="vaultForm" class="form">
+                    <label for="vaultKey">Key</label>
+                    <input id="vaultKey" name="key" value="pass" autocomplete="off">
+                    <label for="vaultValue">Value</label>
+                    <input id="vaultValue" name="value" value="123" autocomplete="off">
+                    <button type="submit" class="btn btn-info">Validate Vault Secret</button>
+                </form>
+                <div id="vaultResult" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h2>Backend Logs</h2>
+                <button id="btnLogs" class="btn btn-info">Generate Loki Demo Logs</button>
+                <div id="logResult" class="result"></div>
+            </div>
+
+            <!-- Monitoring Links -->
+            <div class="card">
+                <h2>Monitoring</h2>
+                <div class="metric">
+                    <span class="label">Prometheus</span>
+                    <span class="value"><a href="http://localhost:9090" target="_blank">Open</a></span>
+                </div>
+                <div class="metric">
+                    <span class="label">Grafana</span>
+                    <span class="value"><a href="http://localhost:3000" target="_blank">Open</a></span>
+                </div>
+                <div class="metric">
+                    <span class="label">Vault</span>
+                    <span class="value"><a href="http://localhost:8200" target="_blank">Open</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
