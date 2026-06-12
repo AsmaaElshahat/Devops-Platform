@@ -280,11 +280,6 @@ resource "helm_release" "grafana" {
           ]
         }
       }
-      "grafana.ini" = {
-        dashboards = {
-          default_home_dashboard_path = "/var/lib/grafana/dashboards/default/backend-observability.json"
-        }
-      }
       dashboardProviders = {
         "dashboardproviders.yaml" = {
           apiVersion = 1
@@ -307,6 +302,9 @@ resource "helm_release" "grafana" {
         default = {
           "backend-observability" = {
             json = local.backend_dashboard_json
+          }
+          "request-outcomes" = {
+            json = local.request_outcomes_dashboard_json
           }
         }
       }

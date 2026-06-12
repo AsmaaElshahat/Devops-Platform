@@ -11,7 +11,12 @@ services:
     environment:
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=5001
+      - VAULT_ADDR=http://host.docker.internal:8200
+      - VAULT_TOKEN=root
+      - VAULT_SECRET_PATH=cubbyhole/asmaa
       - PYTHONUNBUFFERED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - app-network
 
@@ -26,6 +31,9 @@ services:
       - FRONTEND_HOST=0.0.0.0
       - FRONTEND_PORT=5000
       - BACKEND_URL=http://backend:5001
+      - PROMETHEUS_URL=http://localhost:${PROMETHEUS_HOST_PORT:-9091}
+      - GRAFANA_URL=http://localhost:${GRAFANA_HOST_PORT:-3001}
+      - VAULT_UI_URL=http://localhost:8200
       - PYTHONUNBUFFERED=1
     depends_on:
       - backend
@@ -35,7 +43,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_HOST_PORT:-9091}:9090"
     user: root
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -50,7 +58,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "${GRAFANA_HOST_PORT:-3001}:3000"
     user: root
     environment:
       - GF_SECURITY_ADMIN_USER=admin

@@ -4,7 +4,7 @@ import requests
 from flask import Flask, jsonify, render_template, request
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import FRONTEND_HOST, FRONTEND_PORT
+from config import FRONTEND_HOST, FRONTEND_PORT, GRAFANA_URL, PROMETHEUS_URL, VAULT_UI_URL
 
 app = Flask(__name__)
 
@@ -27,6 +27,9 @@ def dashboard():
         "dashboard.html",
         health=health,
         metrics=metrics,
+        prometheus_url=PROMETHEUS_URL,
+        grafana_url=GRAFANA_URL,
+        vault_url=VAULT_UI_URL,
     )
 
 

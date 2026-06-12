@@ -21,3 +21,8 @@ CONSUL_ADDR = os.getenv("CONSUL_ADDR", "http://localhost:8500")
 
 # Prometheus metrics port
 METRICS_PORT = int(os.getenv("METRICS_PORT", "9090"))
+
+# Browser-facing tool URLs
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
+GRAFANA_URL = os.getenv("GRAFANA_URL", "http://localhost:3000")
+VAULT_UI_URL = os.getenv("VAULT_UI_URL", VAULT_ADDR)
