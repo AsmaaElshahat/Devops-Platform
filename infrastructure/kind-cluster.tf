@@ -72,3 +72,29 @@ resource "null_resource" "kind_cluster" {
 
   depends_on = [local_file.kind_config]
 }
+
+resource "null_resource" "kind_node_sysctls" {
+  triggers = {
+    always = timestamp()
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+
+      if ! command -v docker >/dev/null 2>&1; then
+        echo "docker is required to tune Kind node sysctls." >&2
+        exit 1
+      fi
+
+      for node in $(docker ps --format '{{.Names}}' | grep '^${var.cluster_name}-'); do
+        docker exec "$node" sysctl -w fs.inotify.max_user_instances=1024
+        docker exec "$node" sysctl -w fs.inotify.max_user_watches=1048576
+        docker exec "$node" sysctl -w fs.inotify.max_queued_events=32768
+      done
+    EOT
+  }
+
+  depends_on = [null_resource.kind_cluster]
+}

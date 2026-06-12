@@ -113,6 +113,32 @@ resource "helm_release" "prometheus" {
           ruleSelectorNilUsesHelmValues           = false
         }
       }
+      additionalServiceMonitors = var.enable_app_deployment ? [
+        {
+          name = "flask-backend"
+          additionalLabels = {
+            app       = "flask-app"
+            component = "backend"
+            managedBy = "terraform"
+          }
+          selector = {
+            matchLabels = {
+              app       = "flask-app"
+              component = "backend"
+            }
+          }
+          namespaceSelector = {
+            matchNames = [var.app_namespace]
+          }
+          endpoints = [
+            {
+              port     = "http"
+              path     = "/metrics"
+              interval = "15s"
+            }
+          ]
+        }
+      ] : []
     })
   ]
 
@@ -352,15 +378,26 @@ resource "helm_release" "promtail" {
           }
         ]
         snippets = {
-          pipelineStages = [
-            {
-              cri = {}
-            }
-          ]
+          scrapeConfigs = <<-EOT
+            - job_name: ${var.app_namespace}-pod-logs
+              pipeline_stages:
+                - cri: {}
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: ${var.app_namespace}/pod-logs
+                    namespace: ${var.app_namespace}
+                    __path__: /var/log/pods/${var.app_namespace}_*/*/*.log
+          EOT
         }
       }
+      tolerations = []
     })
   ]
 
-  depends_on = [helm_release.loki]
+  depends_on = [
+    helm_release.loki,
+    null_resource.kind_node_sysctls
+  ]
 }

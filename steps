@@ -1,0 +1,36 @@
+cd /infrastructure
+
+terraform apply \
+  -target=local_file.kind_config \
+  -target=null_resource.kind_cluster
+
+
+Then check the cluster exists:
+kind get clusters
+kubectl config get-contexts
+kubectl get nodes
+
+You should see:
+devops-platform
+kind-devops-platform
+
+Build your Docker image locally:
+docker build -t flask-app:latest .
+Load it into the Kind cluster:
+kind load docker-image flask-app:latest --name devops-platform
+
+
+Then run the full apply:
+terraform apply
+
+After it finishes:
+kubectl get pods -A
+
+
+If Promtail ever gets stuck from a previous failed release, clean only Promtail and retry:
+kubectl -n logging delete daemonset promtail --ignore-not-found
+kubectl -n logging delete secret promtail --ignore-not-found
+kubectl -n logging delete secret -l owner=helm,name=promtail --ignore-not-found
+
+cd /home/asmaa/app/infrastructure
+terraform apply
