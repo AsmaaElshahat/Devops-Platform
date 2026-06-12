@@ -112,33 +112,33 @@ resource "helm_release" "prometheus" {
           podMonitorSelectorNilUsesHelmValues     = false
           ruleSelectorNilUsesHelmValues           = false
         }
-      }
-      additionalServiceMonitors = var.enable_app_deployment ? [
-        {
-          name = "flask-backend"
-          additionalLabels = {
-            app       = "flask-app"
-            component = "backend"
-            managedBy = "terraform"
-          }
-          selector = {
-            matchLabels = {
+        additionalServiceMonitors = var.enable_app_deployment ? [
+          {
+            name = "flask-backend"
+            additionalLabels = {
               app       = "flask-app"
               component = "backend"
+              managedBy = "terraform"
             }
-          }
-          namespaceSelector = {
-            matchNames = [var.app_namespace]
-          }
-          endpoints = [
-            {
-              port     = "http"
-              path     = "/metrics"
-              interval = "15s"
+            selector = {
+              matchLabels = {
+                app       = "flask-app"
+                component = "backend"
+              }
             }
-          ]
-        }
-      ] : []
+            namespaceSelector = {
+              matchNames = [var.app_namespace]
+            }
+            endpoints = [
+              {
+                port     = "http"
+                path     = "/metrics"
+                interval = "15s"
+              }
+            ]
+          }
+        ] : []
+      }
     })
   ]
 

@@ -332,7 +332,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (endpoint, status) (increase(app_http_requests_total[$__range]))",
+          "expr": "sum by (exported_endpoint, status) (increase(app_http_requests_total[$__range]))",
           "format": "table",
           "instant": true
         }

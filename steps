@@ -21,7 +21,7 @@ kind load docker-image flask-app:latest --name devops-platform
 
 
 Then run the full apply:
-terraform apply
+terraform apply -auto-approve
 
 After it finishes:
 kubectl get pods -A
